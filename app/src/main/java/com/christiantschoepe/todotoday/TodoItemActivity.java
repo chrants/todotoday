@@ -14,6 +14,7 @@ import android.widget.TextView;
 
 public class TodoItemActivity extends AppCompatActivity {
 
+    public final static String EXTRA_ID = "todolist.ITEM_ID";
     public final static String EXTRA_TITLE = "todolist.ITEM_TITLE";
     public final static String EXTRA_DESCRIPTION = "todolist.ITEM_DESCRIPTION";
 
@@ -30,6 +31,16 @@ public class TodoItemActivity extends AppCompatActivity {
         itemTitle = (EditText) findViewById(R.id.todo_item_title);
         itemDescription = (EditText) findViewById(R.id.todo_item_description);
 
+        Intent intent = getIntent();
+        final int id = intent.getIntExtra(TodoItemActivity.EXTRA_ID, -1);
+        String title = intent.getStringExtra(TodoItemActivity.EXTRA_TITLE);
+        String desc = intent.getStringExtra(TodoItemActivity.EXTRA_DESCRIPTION);
+        boolean isNewItem = title == null;
+        if(title != null) {
+            itemTitle.setText(title);
+            itemDescription.setText(desc);
+        }
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -42,6 +53,7 @@ public class TodoItemActivity extends AppCompatActivity {
                     Snackbar.make(view, "Please put a valid title", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 } else {
+                    intent.putExtra(EXTRA_ID, id);
                     intent.putExtra(EXTRA_TITLE, title);
                     intent.putExtra(EXTRA_DESCRIPTION, desc);
 //                    startActivity(intent);

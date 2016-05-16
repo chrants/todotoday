@@ -34,13 +34,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Here's what you have to do today: " />
-    <LinearLayout
-        android:id="@+id/todolist"
+    <ListView
+        android:id="@android:id/list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="You have nothing to do!"
-        android:orientation="vertical">
-
-    </LinearLayout>
+        android:orientation="vertical" />
 
 </LinearLayout>

@@ -1,7 +1,11 @@
 package com.christiantschoepe.todotoday;
 
+import android.app.ListActivity;
+import android.app.LoaderManager;
 import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -11,19 +15,37 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Random;
 
-public class TodoListActivity extends AppCompatActivity {
+import static com.christiantschoepe.todotoday.TodoItemActivity.*;
+
+public class TodoListActivity extends AppCompatActivity
+        implements LoaderManager.LoaderCallbacks<Cursor>, AdapterView.OnItemClickListener {
 
     static final int ADD_TODO_ITEM_REQUEST = 1;
+    static final int MODIFY_TODO_ITEM_REQUEST = 2;
+
     TodoItemDbHelper mDbHelper;
 //    public String todolist = "";
     public ArrayList<TodoItem> todolist = new ArrayList<TodoItem>();
+
+    // This is the Adapter being used to display the list's data
+    SimpleCursorAdapter mAdapter;
+
+    // These are the Contacts rows that we will retrieve
+    static final String[] PROJECTION = new String[] { TodoItemEntry._ID,
+            TodoItemEntry.COLUMN_NAME_TITLE, TodoItemEntry.COLUMN_NAME_DESCRIPTION};
+
+    // This is the select criteria
+    static final String SELECTION = "*";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +107,18 @@ public class TodoListActivity extends AppCompatActivity {
             } else if (resultCode == RESULT_CANCELED) {
 
             }
+        } else if (requestCode == MODIFY_TODO_ITEM_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                // The user created a todo_item.
+                int id = data.getIntExtra(EXTRA_ID, -1);
+                String title = data.getStringExtra(TodoItemActivity.EXTRA_TITLE);
+                String desc = data.getStringExtra(TodoItemActivity.EXTRA_DESCRIPTION);
+//                if(title != null) {
+                if (desc == null) desc = "";
+                TodoItem item = addTodoItem(title, desc);
+                addTodoToDB(item);
+//                }
+            }
         }
     }
 
@@ -105,15 +139,17 @@ public class TodoListActivity extends AppCompatActivity {
 
             // Insert the new row, returning the primary key value of the new row
             long newRowId;
-            newRowId = db.insert(
+            newRowId = db.update(
                     TodoItemEntry.TABLE_NAME,
+                    values,
                     null,
-                    values);
+                    null);
+            
 
         }
 
-        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
-        layout.removeAllViewsInLayout();
+//        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
+//        layout.removeAllViewsInLayout();
 
         super.onStop();
     }
@@ -164,6 +200,20 @@ public class TodoListActivity extends AppCompatActivity {
                 addTodoItem(itemId, itemTitle, itemDesc);
             } while(c.moveToNext());
 
+        c.moveToFirst();
+        String[] fromColumns = {TodoItemEntry.COLUMN_NAME_TITLE,
+                TodoItemEntry.COLUMN_NAME_DESCRIPTION};
+        int[] toViews = {R.id.todo_item1_title, R.id.todo_item1_description};
+
+        mAdapter = new SimpleCursorAdapter(this,
+                R.layout.list_todo_item, c, fromColumns, toViews, 0);
+        ListView listView = (ListView) findViewById(android.R.id.list);
+        listView.setAdapter(mAdapter);
+        listView.setOnItemClickListener(this);
+
+        // Prepare the loader.  Either re-connect with an existing one,
+        // or start a new one.
+        getLoaderManager().initLoader(0, null, this);
 
         super.onStart();
     }
@@ -185,8 +235,8 @@ public class TodoListActivity extends AppCompatActivity {
         todolist.add(item);
         TextView itemView = new TextView(this);
         itemView.setText(title + "  " + desc);
-        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
-        layout.addView(itemView);
+//        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
+//        layout.addView(itemView);
 
         return item;
 //        thingsTodo.setText(todolist);
@@ -211,5 +261,45 @@ public class TodoListActivity extends AppCompatActivity {
                 values);
     }
 
-    
+    // Called when a new Loader needs to be created
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        // Now create and return a CursorLoader that will take care of
+        // creating a Cursor for the data being displayed.
+        return new CursorLoader(this, null, PROJECTION, null, null, null) {
+            @Override
+            public Cursor loadInBackground()
+            {
+                // You better know how to get your database.
+                SQLiteDatabase DB = mDbHelper.getReadableDatabase();
+                // You can use any query that returns a cursor.
+                return DB.query(TodoItemEntry.TABLE_NAME, getProjection(), getSelection(), getSelectionArgs(), null, null, getSortOrder(), null );
+            }
+        };
+    }
+
+    // Called when a previously created loader has finished loading
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        // Swap the new cursor in.  (The framework will take care of closing the
+        // old cursor once we return.)
+        mAdapter.swapCursor(data);
+    }
+
+    // Called when a previously created loader is reset, making the data unavailable
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // This is called when the last Cursor provided to onLoadFinished()
+        // above is about to be closed.  We need to make sure we are no
+        // longer using it.
+        mAdapter.swapCursor(null);
+    }
+
+    // When a todo_item is clicked
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+        Intent intent = new Intent(TodoListActivity.this, TodoItemActivity.class);
+        TodoItem edit_item = todolist.get(position);
+        intent.putExtra(EXTRA_ID, edit_item.id);
+        intent.putExtra(EXTRA_TITLE, edit_item.title);
+        intent.putExtra(EXTRA_DESCRIPTION, edit_item.description);
+        startActivityForResult(intent, MODIFY_TODO_ITEM_REQUEST);
+    }
 }
