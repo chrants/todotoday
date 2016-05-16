@@ -116,7 +116,7 @@ public class TodoListActivity extends AppCompatActivity
 //                if(title != null) {
                 if (desc == null) desc = "";
                 TodoItem item = addTodoItem(title, desc);
-                addTodoToDB(item);
+                updateTodoToDB(item);
 //                }
             }
         }
@@ -133,17 +133,15 @@ public class TodoListActivity extends AppCompatActivity
             System.out.println(item.title);
             // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
-            values.put(TodoItemEntry.COLUMN_NAME_ITEM_ID, item.id);
             values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
             values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
 
             // Insert the new row, returning the primary key value of the new row
             long newRowId;
-            newRowId = db.update(
+            newRowId = db.insert(
                     TodoItemEntry.TABLE_NAME,
-                    values,
                     null,
-                    null);
+                    values);
 
 
         }
@@ -259,6 +257,26 @@ public class TodoListActivity extends AppCompatActivity
                 TodoItemEntry.TABLE_NAME,
                 null,
                 values);
+    }
+
+    void updateTodoToDB(TodoItem item) {
+        // Gets the data repository in write mode
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        System.out.println(item.title);
+        // Create a new map of values, where column names are the keys
+        ContentValues values = new ContentValues();
+        values.put(TodoItemEntry.COLUMN_NAME_ITEM_ID, item.id);
+        values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
+        values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
+
+        // Insert the new row, returning the primary key value of the new row
+        long newRowId;
+        newRowId = db.update(
+                TodoItemEntry.TABLE_NAME,
+                values,
+                null,
+                null);
     }
 
     // Called when a new Loader needs to be created
