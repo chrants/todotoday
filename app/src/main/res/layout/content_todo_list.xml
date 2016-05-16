@@ -14,21 +14,21 @@
     tools:showIn="@layout/activity_todo_list"
     android:id="@+id/todo_list_layout">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Enter a new todo item: " />
-    <EditText
-        android:id="@+id/add_todo_msg"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="@string/edit_message" />
-    <Button
-        android:id="@+id/add_todo_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/btn_add_todo"
-        android:onClick="addTodo" />
+    <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Enter a new todo item: " />-->
+    <!--<EditText-->
+        <!--android:id="@+id/add_todo_msg"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:hint="@string/edit_message" />-->
+    <!--<Button-->
+        <!--android:id="@+id/add_todo_btn"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="@string/btn_add_todo"-->
+        <!--android:onClick="addTodo" />-->
 
     <TextView
         android:layout_width="wrap_content"

@@ -144,7 +144,7 @@ public class TodoListActivity extends AppCompatActivity
                     values,
                     null,
                     null);
-            
+
 
         }
 
@@ -218,12 +218,12 @@ public class TodoListActivity extends AppCompatActivity
         super.onStart();
     }
 
-    public void addTodo(View v) {
-        EditText todoMsg = (EditText) findViewById(R.id.add_todo_msg);
-
-        addTodoItem(todoMsg.getText().toString(), "");
-        todoMsg.setText("");
-    }
+//    public void addTodo(View v) {
+//        EditText todoMsg = (EditText) findViewById(R.id.add_todo_msg);
+//
+//        addTodoItem(todoMsg.getText().toString(), "");
+//        todoMsg.setText("");
+//    }
 
     public TodoItem addTodoItem(String title, String desc) {
         return addTodoItem(todolist.size() + 1, title, desc);
@@ -297,6 +297,7 @@ public class TodoListActivity extends AppCompatActivity
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
         Intent intent = new Intent(TodoListActivity.this, TodoItemActivity.class);
         TodoItem edit_item = todolist.get(position);
+        System.out.println("Editing item # " + edit_item.id + "  " + edit_item.title);
         intent.putExtra(EXTRA_ID, edit_item.id);
         intent.putExtra(EXTRA_TITLE, edit_item.title);
         intent.putExtra(EXTRA_DESCRIPTION, edit_item.description);
