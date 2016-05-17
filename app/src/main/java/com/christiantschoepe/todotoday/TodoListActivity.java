@@ -115,7 +115,7 @@ public class TodoListActivity extends AppCompatActivity
                 String desc = data.getStringExtra(TodoItemActivity.EXTRA_DESCRIPTION);
 //                if(title != null) {
                 if (desc == null) desc = "";
-                TodoItem item = addTodoItem(title, desc);
+                TodoItem item = addTodoItem(id, title, desc);
                 updateTodoToDB(item);
 //                }
             }
@@ -263,7 +263,7 @@ public class TodoListActivity extends AppCompatActivity
         // Gets the data repository in write mode
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-        System.out.println(item.title);
+        System.out.println(item.title + item.id);
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
         values.put(TodoItemEntry.COLUMN_NAME_ITEM_ID, item.id);
@@ -275,7 +275,7 @@ public class TodoListActivity extends AppCompatActivity
         newRowId = db.update(
                 TodoItemEntry.TABLE_NAME,
                 values,
-                null,
+                TodoItemEntry._ID + "=" + item.id,
                 null);
     }
 
