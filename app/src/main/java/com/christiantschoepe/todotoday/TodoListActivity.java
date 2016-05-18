@@ -66,6 +66,7 @@ public class TodoListActivity extends AppCompatActivity
                 startActivityForResult(intent, ADD_TODO_ITEM_REQUEST);
             }
         });
+
     }
 
     @Override
@@ -123,36 +124,6 @@ public class TodoListActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onStop() {
-        // Gets the data repository in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-        db.delete(TodoItemEntry.TABLE_NAME, null, null);
-
-        for(TodoItem item : todolist) {
-            System.out.println(item.title);
-            // Create a new map of values, where column names are the keys
-            ContentValues values = new ContentValues();
-            values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
-            values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
-
-            // Insert the new row, returning the primary key value of the new row
-            long newRowId;
-            newRowId = db.insert(
-                    TodoItemEntry.TABLE_NAME,
-                    null,
-                    values);
-
-
-        }
-
-//        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
-//        layout.removeAllViewsInLayout();
-
-        super.onStop();
-    }
-
-    @Override
     protected void onStart() {
 
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -205,15 +176,67 @@ public class TodoListActivity extends AppCompatActivity
 
         mAdapter = new SimpleCursorAdapter(this,
                 R.layout.list_todo_item, c, fromColumns, toViews, 0);
+
         ListView listView = (ListView) findViewById(android.R.id.list);
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(this);
+        SwipeDismissListViewTouchListener touchListener =
+                new SwipeDismissListViewTouchListener(
+                        listView,
+                        new SwipeDismissListViewTouchListener.DismissCallbacks() {
+                            @Override
+                            public boolean canDismiss(int position) {
+                                return true;
+                            }
+
+                            public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+                                for (int position : reverseSortedPositions) {
+                                    SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+                                    db.delete(TodoItemEntry.TABLE_NAME, TodoItemEntry._ID + "=" + todolist.get(position).id, null);
+                                    mAdapter.notifyDataSetChanged();
+                                    todolist.remove(position);
+                                }
+                            }
+                        });
+        listView.setOnTouchListener(touchListener);
+        listView.setOnScrollListener(touchListener.makeScrollListener());
 
         // Prepare the loader.  Either re-connect with an existing one,
         // or start a new one.
         getLoaderManager().initLoader(0, null, this);
 
         super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        // Gets the data repository in write mode
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        db.delete(TodoItemEntry.TABLE_NAME, null, null);
+
+        for(TodoItem item : todolist) {
+            System.out.println(item.title);
+            // Create a new map of values, where column names are the keys
+            ContentValues values = new ContentValues();
+            values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
+            values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
+
+            // Insert the new row, returning the primary key value of the new row
+            long newRowId;
+            newRowId = db.insert(
+                    TodoItemEntry.TABLE_NAME,
+                    null,
+                    values);
+
+
+        }
+
+//        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
+//        layout.removeAllViewsInLayout();
+
+        super.onStop();
     }
 
 //    public void addTodo(View v) {

@@ -16,7 +16,8 @@ public class TodoItemDbHelper extends SQLiteOpenHelper {
                     TodoItemEntry._ID + " INTEGER PRIMARY KEY," +
                     TodoItemEntry.COLUMN_NAME_ITEM_ID + TEXT_TYPE + COMMA_SEP +
                     TodoItemEntry.COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
-                    TodoItemEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE +
+                    TodoItemEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
+                    TodoItemEntry.COLUMN_NAME_ARCHIVED + "INTEGER" +
 //    ... // Any other options for the CREATE command
                     " )";
 
