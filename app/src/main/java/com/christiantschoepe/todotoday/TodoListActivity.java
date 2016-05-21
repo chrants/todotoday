@@ -130,21 +130,22 @@ public class TodoListActivity extends AppCompatActivity
 
         // Define a projection that specifies which columns from the database
         // you will actually use after this query.
-        String[] projection = {
+        final String[] projection = {
                 TodoItemEntry._ID,
                 TodoItemEntry.COLUMN_NAME_TITLE,
                 TodoItemEntry.COLUMN_NAME_DESCRIPTION,
+//                TodoItemEntry.COLUMN_NAME_ARCHIVED
 //        ...
         };
 
         // How you want the results sorted in the resulting Cursor
-        String sortOrder =
+        final String sortOrder =
                 TodoItemEntry._ID + " ASC";
 
         Cursor c = db.query(
                 TodoItemEntry.TABLE_NAME,  // The table to query
                 projection,                               // The columns to return
-                null,                                // The columns for the WHERE clause
+                TodoItemEntry.COLUMN_NAME_ARCHIVED + "=" + 0,                                // The columns for the WHERE clause
                 null,                            // The values for the WHERE clause
                 null,                                     // don't group the rows
                 null,                                     // don't filter by row groups
@@ -181,24 +182,35 @@ public class TodoListActivity extends AppCompatActivity
         listView.setAdapter(mAdapter);
         listView.setOnItemClickListener(this);
         SwipeDismissListViewTouchListener touchListener =
-                new SwipeDismissListViewTouchListener(
-                        listView,
-                        new SwipeDismissListViewTouchListener.DismissCallbacks() {
-                            @Override
-                            public boolean canDismiss(int position) {
-                                return true;
-                            }
+            new SwipeDismissListViewTouchListener(
+                listView,
+                new SwipeDismissListViewTouchListener.DismissCallbacks() {
+                        @Override
+                        public boolean canDismiss(int position) {
+                            return true;
+                        }
 
-                            public void onDismiss(ListView listView, int[] reverseSortedPositions) {
-                                for (int position : reverseSortedPositions) {
-                                    SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                        public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+                            for (int position : reverseSortedPositions) {
+                                SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-                                    db.delete(TodoItemEntry.TABLE_NAME, TodoItemEntry._ID + "=" + todolist.get(position).id, null);
-                                    mAdapter.notifyDataSetChanged();
-                                    todolist.remove(position);
-                                }
+//                                db.delete(TodoItemEntry.TABLE_NAME, TodoItemEntry._ID + "=" + todolist.get(position).id, null);
+                                TodoItem item = todolist.get(position);
+                                item.archive();
+                                updateTodoToDB(item);
+                                mAdapter.changeCursor(db.query(
+                                        TodoItemEntry.TABLE_NAME,  // The table to query
+                                        projection,                               // The columns to return
+                                        TodoItemEntry.COLUMN_NAME_ARCHIVED + "=" + 0,                                // The columns for the WHERE clause
+                                        null,                            // The values for the WHERE clause
+                                        null,                                     // don't group the rows
+                                        null,                                     // don't filter by row groups
+                                        sortOrder                                 // The sort order
+                                ));
+                                todolist.remove(position);
                             }
-                        });
+                        }
+                });
         listView.setOnTouchListener(touchListener);
         listView.setOnScrollListener(touchListener.makeScrollListener());
 
@@ -214,7 +226,8 @@ public class TodoListActivity extends AppCompatActivity
         // Gets the data repository in write mode
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-        db.delete(TodoItemEntry.TABLE_NAME, null, null);
+        db.beginTransaction();
+        db.delete(TodoItemEntry.TABLE_NAME, TodoItemEntry.COLUMN_NAME_ARCHIVED + "=" + 0, null);
 
         for(TodoItem item : todolist) {
             System.out.println(item.title);
@@ -222,6 +235,7 @@ public class TodoListActivity extends AppCompatActivity
             ContentValues values = new ContentValues();
             values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
             values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
+            values.put(TodoItemEntry.COLUMN_NAME_ARCHIVED, item.archived);
 
             // Insert the new row, returning the primary key value of the new row
             long newRowId;
@@ -230,8 +244,8 @@ public class TodoListActivity extends AppCompatActivity
                     null,
                     values);
 
-
         }
+        db.endTransaction();
 
 //        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
 //        layout.removeAllViewsInLayout();
@@ -254,8 +268,8 @@ public class TodoListActivity extends AppCompatActivity
 //        todolist += title + " " + desc + "\n";
         TodoItem item = new TodoItem(id, title, desc);
         todolist.add(item);
-        TextView itemView = new TextView(this);
-        itemView.setText(title + "  " + desc);
+//        TextView itemView = new TextView(this);
+//        itemView.setText(title + "  " + desc);
 //        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
 //        layout.addView(itemView);
 
@@ -273,6 +287,7 @@ public class TodoListActivity extends AppCompatActivity
         values.put(TodoItemEntry.COLUMN_NAME_ITEM_ID, item.id);
         values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
         values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
+        values.put(TodoItemEntry.COLUMN_NAME_ARCHIVED, item.archived);
 
         // Insert the new row, returning the primary key value of the new row
         long newRowId;
@@ -292,6 +307,7 @@ public class TodoListActivity extends AppCompatActivity
         values.put(TodoItemEntry.COLUMN_NAME_ITEM_ID, item.id);
         values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
         values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
+        values.put(TodoItemEntry.COLUMN_NAME_ARCHIVED, item.archived);
 
         // Insert the new row, returning the primary key value of the new row
         long newRowId;
@@ -306,7 +322,7 @@ public class TodoListActivity extends AppCompatActivity
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         // Now create and return a CursorLoader that will take care of
         // creating a Cursor for the data being displayed.
-        return new CursorLoader(this, null, PROJECTION, null, null, null) {
+        return new CursorLoader(this, null, PROJECTION, TodoItemEntry.COLUMN_NAME_ARCHIVED + "=" + 0, null, null) {
             @Override
             public Cursor loadInBackground()
             {

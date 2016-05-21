@@ -8,11 +8,17 @@ public class TodoItem {
     public int id;
     public String title = "";
     public String description = "";
+    public int archived;
 
     public TodoItem(int id, String title, String desc) {
         this.id = id;
         this.title = title;
         this.description = desc;
+        this.archived = 0;
+    }
+
+    public void archive() {
+        this.archived = 1;
     }
 
 }
