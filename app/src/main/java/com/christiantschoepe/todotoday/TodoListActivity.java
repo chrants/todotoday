@@ -1,6 +1,5 @@
 package com.christiantschoepe.todotoday;
 
-import android.app.ListActivity;
 import android.app.LoaderManager;
 import android.content.ContentValues;
 import android.content.CursorLoader;
@@ -23,6 +22,7 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 
 import static com.christiantschoepe.todotoday.TodoItemActivity.*;
@@ -60,8 +60,6 @@ public class TodoListActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
                 Intent intent = new Intent(TodoListActivity.this, TodoItemActivity.class);
                 startActivityForResult(intent, ADD_TODO_ITEM_REQUEST);
             }
@@ -98,11 +96,14 @@ public class TodoListActivity extends AppCompatActivity
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
                 // The user created a todo_item.
-                String title = data.getStringExtra(TodoItemActivity.EXTRA_TITLE);
-                String desc = data.getStringExtra(TodoItemActivity.EXTRA_DESCRIPTION);
+                String title = data.getStringExtra(EXTRA_TITLE);
+                String desc = data.getStringExtra(EXTRA_DESCRIPTION);
+                String dueDate = data.getStringExtra(EXTRA_DUE_DATE);
+                String dueTime = data.getStringExtra(EXTRA_DUE_TIME);
 //                if(title != null) {
                 if (desc == null) desc = "";
-                TodoItem item = addTodoItem(title, desc);
+                TodoItem item = new TodoItem(todolist.size() + 1, title, desc, dueAt(dueDate, dueTime));
+                todolist.add(item);
                 addTodoToDB(item);
 //                }
             } else if (resultCode == RESULT_CANCELED) {
@@ -112,13 +113,13 @@ public class TodoListActivity extends AppCompatActivity
             if (resultCode == RESULT_OK) {
                 // The user created a todo_item.
                 int id = data.getIntExtra(EXTRA_ID, -1);
-                String title = data.getStringExtra(TodoItemActivity.EXTRA_TITLE);
-                String desc = data.getStringExtra(TodoItemActivity.EXTRA_DESCRIPTION);
-//                if(title != null) {
+                String title = data.getStringExtra(EXTRA_TITLE);
+                String desc = data.getStringExtra(EXTRA_DESCRIPTION);
+                String dueDate = data.getStringExtra(EXTRA_DUE_DATE);
+                String dueTime = data.getStringExtra(EXTRA_DUE_TIME);
                 if (desc == null) desc = "";
-                TodoItem item = addTodoItem(id, title, desc);
+                TodoItem item = new TodoItem(id, title, desc, dueAt(dueDate, dueTime));
                 updateTodoToDB(item);
-//                }
             }
         }
     }
@@ -134,13 +135,13 @@ public class TodoListActivity extends AppCompatActivity
                 TodoItemEntry._ID,
                 TodoItemEntry.COLUMN_NAME_TITLE,
                 TodoItemEntry.COLUMN_NAME_DESCRIPTION,
-//                TodoItemEntry.COLUMN_NAME_ARCHIVED
+                TodoItemEntry.COLUMN_NAME_DUE_AT
 //        ...
         };
 
         // How you want the results sorted in the resulting Cursor
         final String sortOrder =
-                TodoItemEntry._ID + " ASC";
+                TodoItemEntry.COLUMN_NAME_DUE_AT + " ASC";
 
         Cursor c = db.query(
                 TodoItemEntry.TABLE_NAME,  // The table to query
@@ -165,9 +166,10 @@ public class TodoListActivity extends AppCompatActivity
                 String itemDesc = c.getString(
                         c.getColumnIndexOrThrow(TodoItemEntry.COLUMN_NAME_DESCRIPTION)
                 );
+                long dueAt = c.getLong(c.getColumnIndexOrThrow(TodoItemEntry.COLUMN_NAME_DUE_AT));
 
                 System.out.println(itemTitle + " " + itemId);
-                addTodoItem(itemId, itemTitle, itemDesc);
+                todolist.add(new TodoItem(itemId, itemTitle, itemDesc, new Date(dueAt)));
             } while(c.moveToNext());
 
         c.moveToFirst();
@@ -236,6 +238,7 @@ public class TodoListActivity extends AppCompatActivity
             values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
             values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
             values.put(TodoItemEntry.COLUMN_NAME_ARCHIVED, item.archived);
+            values.put(TodoItemEntry.COLUMN_NAME_DUE_AT, item.dueAt.getTime());
 
             // Insert the new row, returning the primary key value of the new row
             long newRowId;
@@ -260,21 +263,31 @@ public class TodoListActivity extends AppCompatActivity
 //        todoMsg.setText("");
 //    }
 
-    public TodoItem addTodoItem(String title, String desc) {
-        return addTodoItem(todolist.size() + 1, title, desc);
-    }
+//    public TodoItem addTodoItem(String title, String desc) {
+//        return addTodoItem(todolist.size() + 1, title, desc);
+//    }
 
-    public TodoItem addTodoItem(int id, String title, String desc) {
-//        todolist += title + " " + desc + "\n";
-        TodoItem item = new TodoItem(id, title, desc);
-        todolist.add(item);
-//        TextView itemView = new TextView(this);
-//        itemView.setText(title + "  " + desc);
-//        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
-//        layout.addView(itemView);
+//    public TodoItem addTodoItem(int id, String title, String desc) {
+////        todolist += title + " " + desc + "\n";
+//        TodoItem item = new TodoItem(id, title, desc);
+//        todolist.add(item);
+////        TextView itemView = new TextView(this);
+////        itemView.setText(title + "  " + desc);
+////        LinearLayout layout = (LinearLayout) findViewById(R.id.todolist);
+////        layout.addView(itemView);
+//
+//        return item;
+////        thingsTodo.setText(todolist);
+//    }
 
-        return item;
-//        thingsTodo.setText(todolist);
+    Date dueAt(String dueDate, String dueTime) {
+        String[] date = dueDate.split("/");
+        String[] time = dueTime.split(":");
+
+        Date myDate = new Date(
+                Integer.parseInt(date[2]), Integer.parseInt(date[0]), Integer.parseInt(date[1]), /* yr, mth, dy */
+                Integer.parseInt(time[0]), Integer.parseInt(time[1])); /* hr, mn */
+        return myDate;
     }
 
     void addTodoToDB(TodoItem item) {
@@ -288,6 +301,7 @@ public class TodoListActivity extends AppCompatActivity
         values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
         values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
         values.put(TodoItemEntry.COLUMN_NAME_ARCHIVED, item.archived);
+        values.put(TodoItemEntry.COLUMN_NAME_DUE_AT, item.dueAt.getTime());
 
         // Insert the new row, returning the primary key value of the new row
         long newRowId;
@@ -308,6 +322,7 @@ public class TodoListActivity extends AppCompatActivity
         values.put(TodoItemEntry.COLUMN_NAME_TITLE, item.title);
         values.put(TodoItemEntry.COLUMN_NAME_DESCRIPTION, item.description);
         values.put(TodoItemEntry.COLUMN_NAME_ARCHIVED, item.archived);
+        values.put(TodoItemEntry.COLUMN_NAME_DUE_AT, item.dueAt.getTime());
 
         // Insert the new row, returning the primary key value of the new row
         long newRowId;
@@ -358,6 +373,9 @@ public class TodoListActivity extends AppCompatActivity
         intent.putExtra(EXTRA_ID, edit_item.id);
         intent.putExtra(EXTRA_TITLE, edit_item.title);
         intent.putExtra(EXTRA_DESCRIPTION, edit_item.description);
+        intent.putExtra(EXTRA_DUE_TIME, edit_item.dueAt.getHours() + ":" + edit_item.dueAt.getMinutes());
+        intent.putExtra(EXTRA_DUE_DATE, edit_item.dueAt.getMonth() + "/" + edit_item.dueAt.getDay() + "/" + edit_item.dueAt.getYear());
+
         startActivityForResult(intent, MODIFY_TODO_ITEM_REQUEST);
     }
 }

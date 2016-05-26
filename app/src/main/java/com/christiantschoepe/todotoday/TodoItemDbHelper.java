@@ -18,7 +18,8 @@ public class TodoItemDbHelper extends SQLiteOpenHelper {
                     TodoItemEntry.COLUMN_NAME_ITEM_ID     + TEXT_TYPE + COMMA_SEP +
                     TodoItemEntry.COLUMN_NAME_TITLE       + TEXT_TYPE + COMMA_SEP +
                     TodoItemEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
-                    TodoItemEntry.COLUMN_NAME_ARCHIVED    + INTEGER_TYPE +
+                    TodoItemEntry.COLUMN_NAME_ARCHIVED    + INTEGER_TYPE + COMMA_SEP +
+                    TodoItemEntry.COLUMN_NAME_DUE_AT      + " DATETIME" +
 //    ... // Any other options for the CREATE command
                     " )";
 
@@ -26,8 +27,8 @@ public class TodoItemDbHelper extends SQLiteOpenHelper {
             "DROP TABLE IF EXISTS " + TodoItemEntry.TABLE_NAME;
 
     // If you change the database schema, you must increment the database version.
-    public static final int DATABASE_VERSION = 2;
-    public static final String DATABASE_NAME = "TodoToday.db";
+    public static final int DATABASE_VERSION = 3;
+    public static final String DATABASE_NAME = "TodoListItems.db";
 
     public TodoItemDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
